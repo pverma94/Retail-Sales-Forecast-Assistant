@@ -9,7 +9,17 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import joblib
 import os
+import json
+import base64
+from io import BytesIO
+import pickle
 from typing import Tuple, Optional, Dict, Any
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+import plotly.io as pio
 
 warnings.filterwarnings('ignore')
 
@@ -21,48 +31,322 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize theme in session state
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
+
+def toggle_theme():
+    """Toggle between light and dark themes"""
+    st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+
+def get_theme_css(theme: str) -> str:
+    """Get CSS for the selected theme"""
+    if theme == 'dark':
+        return """
+        <style>
+            /* Dark Theme Variables */
+            :root {
+                --primary-color: #8b5cf6;
+                --primary-dark: #7c3aed;
+                --secondary-color: #a855f7;
+                --accent-color: #06b6d4;
+                --success-color: #10b981;
+                --warning-color: #f59e0b;
+                --error-color: #ef4444;
+                --background-light: #1e293b;
+                --background-dark: #0f172a;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+                --glass-bg: rgba(30, 41, 59, 0.8);
+                --glass-border: rgba(148, 163, 184, 0.3);
+            }
+
+            /* Dark theme overrides */
+            .stApp {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+                color: #f1f5f9 !important;
+            }
+
+            .main .block-container {
+                background: transparent !important;
+                color: #f1f5f9 !important;
+            }
+
+            /* Text colors */
+            .stMarkdown, .stMarkdown p, .stMarkdown div, .stText {
+                color: #f1f5f9 !important;
+            }
+
+            /* Headers */
+            h1, h2, h3, h4, h5, h6 {
+                color: #f1f5f9 !important;
+            }
+
+            .main-header {
+                color: #f1f5f9 !important;
+                text-shadow: 2px 2px 4px rgba(139, 92, 246, 0.5) !important;
+            }
+
+            .glass-card {
+                background: rgba(30, 41, 59, 0.8) !important;
+                border: 1px solid rgba(148, 163, 184, 0.3) !important;
+                color: #f1f5f9 !important;
+            }
+
+            .metric-card {
+                background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%) !important;
+                color: white !important;
+            }
+
+            /* Sidebar styling */
+            .css-1d391kg, .css-1cypcdb {
+                background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            }
+
+            /* Sidebar text colors - DARK MODE */
+            .css-1d391kg *, .css-1d391kg p, .css-1d391kg div, .css-1d391kg span, .css-1d391kg label {
+                color: #ffffff !important;
+            }
+
+            .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
+                color: #ffffff !important;
+            }
+
+            /* Sidebar markdown text */
+            .css-1d391kg .stMarkdown, .css-1d391kg .stMarkdown p, .css-1d391kg .stMarkdown div, .css-1d391kg .stMarkdown span {
+                color: #ffffff !important;
+            }
+
+            /* Force all sidebar elements to be white */
+            section[data-testid="stSidebar"] * {
+                color: #ffffff !important;
+            }
+
+            section[data-testid="stSidebar"] h1,
+            section[data-testid="stSidebar"] h2,
+            section[data-testid="stSidebar"] h3,
+            section[data-testid="stSidebar"] h4,
+            section[data-testid="stSidebar"] h5,
+            section[data-testid="stSidebar"] h6 {
+                color: #ffffff !important;
+            }
+
+            /* Form elements */
+            .stSelectbox > div > div, .stSelectbox label {
+                background-color: #1e293b !important;
+                color: #f1f5f9 !important;
+            }
+
+            .stTextInput > div > div > input {
+                background-color: #1e293b !important;
+                color: #f1f5f9 !important;
+                border-color: #334155 !important;
+            }
+
+            .stTextInput label {
+                color: #f1f5f9 !important;
+            }
+
+            /* Sidebar buttons */
+            .css-1d391kg .stButton > button {
+                color: #f1f5f9 !important;
+                background-color: #334155 !important;
+                border: 1px solid #475569 !important;
+            }
+
+            /* Sidebar selectbox options */
+            .css-1d391kg .stSelectbox > div > div > div {
+                color: #f1f5f9 !important;
+            }
+
+            .stDataFrame {
+                background-color: #1e293b !important;
+                color: #f1f5f9 !important;
+            }
+
+            /* Performance and alert boxes */
+            .performance-box {
+                background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+                color: #f1f5f9 !important;
+            }
+
+            .performance-box div {
+                color: #f1f5f9 !important;
+            }
+        </style>
+        """
+    else:
+        return """
+        <style>
+            /* Light Theme Variables */
+            :root {
+                --primary-color: #6366f1;
+                --primary-dark: #4f46e5;
+                --secondary-color: #8b5cf6;
+                --accent-color: #06b6d4;
+                --success-color: #10b981;
+                --warning-color: #f59e0b;
+                --error-color: #ef4444;
+                --background-light: #ffffff;
+                --background-dark: #f8fafc;
+                --text-primary: #1e293b;
+                --text-secondary: #64748b;
+                --border-color: #e2e8f0;
+                --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                --glass-bg: rgba(255, 255, 255, 0.9);
+                --glass-border: rgba(226, 232, 240, 0.8);
+            }
+
+            /* Light theme overrides */
+            .stApp {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+                color: #1e293b !important;
+            }
+
+            .main .block-container {
+                background: transparent !important;
+                color: #1e293b !important;
+            }
+
+            /* Text colors */
+            .stMarkdown, .stMarkdown p, .stMarkdown div, .stText {
+                color: #1e293b !important;
+            }
+
+            /* Headers */
+            h1, h2, h3, h4, h5, h6 {
+                color: #1e293b !important;
+            }
+
+            /* Ensure all text elements are visible */
+            p, span, div, label {
+                color: #1e293b !important;
+            }
+
+            /* Sidebar text */
+            .css-1d391kg p, .css-1d391kg div, .css-1d391kg span {
+                color: #1e293b !important;
+            }
+
+            .main-header {
+                color: #1e293b !important;
+                text-shadow: 2px 2px 4px rgba(99, 102, 241, 0.3) !important;
+            }
+
+            .glass-card {
+                background: rgba(255, 255, 255, 0.9) !important;
+                border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                color: #1e293b !important;
+            }
+
+            .metric-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                color: white !important;
+            }
+
+            /* Sidebar styling */
+            .css-1d391kg, .css-1cypcdb {
+                background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%) !important;
+            }
+
+            /* Sidebar text colors - LIGHT MODE */
+            .css-1d391kg *, .css-1d391kg p, .css-1d391kg div, .css-1d391kg span, .css-1d391kg label {
+                color: #000000 !important;
+            }
+
+            .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
+                color: #000000 !important;
+            }
+
+            /* Sidebar markdown text */
+            .css-1d391kg .stMarkdown, .css-1d391kg .stMarkdown p, .css-1d391kg .stMarkdown div, .css-1d391kg .stMarkdown span {
+                color: #000000 !important;
+            }
+
+            /* Force all sidebar elements to be black */
+            section[data-testid="stSidebar"] * {
+                color: #000000 !important;
+            }
+
+            section[data-testid="stSidebar"] h1,
+            section[data-testid="stSidebar"] h2,
+            section[data-testid="stSidebar"] h3,
+            section[data-testid="stSidebar"] h4,
+            section[data-testid="stSidebar"] h5,
+            section[data-testid="stSidebar"] h6 {
+                color: #000000 !important;
+            }
+
+            /* Form elements */
+            .stSelectbox > div > div, .stSelectbox label {
+                background-color: #ffffff !important;
+                color: #1e293b !important;
+            }
+
+            .stTextInput > div > div > input {
+                background-color: #ffffff !important;
+                color: #1e293b !important;
+                border-color: #e2e8f0 !important;
+            }
+
+            .stTextInput label {
+                color: #1e293b !important;
+            }
+
+            /* Sidebar buttons */
+            .css-1d391kg .stButton > button {
+                color: #1e293b !important;
+                background-color: #ffffff !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+
+            /* Sidebar selectbox options */
+            .css-1d391kg .stSelectbox > div > div > div {
+                color: #1e293b !important;
+            }
+
+            .stDataFrame {
+                background-color: #ffffff !important;
+                color: #1e293b !important;
+            }
+
+            /* Performance and alert boxes */
+            .performance-box {
+                background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+                color: #1e293b !important;
+            }
+
+            .performance-box div {
+                color: #1e293b !important;
+            }
+        </style>
+        """
+
+# Apply theme CSS
+theme_css = get_theme_css(st.session_state.theme)
+st.markdown(theme_css, unsafe_allow_html=True)
+
 # Modern UX/UI Design - Enhanced CSS
 st.markdown("""
 <style>
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+
     /* Global Styles */
     * {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Modern Color Palette */
-    :root {
-        --primary-color: #6366f1;
-        --primary-dark: #4f46e5;
-        --secondary-color: #8b5cf6;
-        --accent-color: #06b6d4;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --error-color: #ef4444;
-        --background-light: #f8fafc;
-        --background-dark: #1e293b;
-        --text-primary: #1e293b;
-        --text-secondary: #64748b;
-        --border-color: #e2e8f0;
-        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --glass-bg: rgba(255, 255, 255, 0.25);
-        --glass-border: rgba(255, 255, 255, 0.18);
-    }
-    
-    /* Main Header with Gradient */
+    /* Main Header */
     .main-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
         font-size: 3rem;
         font-weight: 700;
         text-align: center;
         margin-bottom: 2rem;
         letter-spacing: -0.025em;
-        text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        /* Color will be set by theme CSS */
     }
     
     /* Glassmorphism Cards */
@@ -127,8 +411,9 @@ st.markdown("""
         box-shadow: var(--card-shadow);
         position: relative;
         overflow: hidden;
+        color: var(--text-primary) !important;
     }
-    
+
     .alert-box::before {
         content: '';
         position: absolute;
@@ -139,7 +424,7 @@ st.markdown("""
         background: var(--error-color);
         border-radius: 2px;
     }
-    
+
     /* Success Summary Box */
     .summary-box {
         background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
@@ -150,8 +435,9 @@ st.markdown("""
         box-shadow: var(--card-shadow);
         position: relative;
         overflow: hidden;
+        color: var(--text-primary) !important;
     }
-    
+
     .summary-box::before {
         content: '';
         position: absolute;
@@ -162,19 +448,20 @@ st.markdown("""
         background: var(--success-color);
         border-radius: 2px;
     }
-    
+
     /* Performance Box */
     .performance-box {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border: 1px solid #93c5fd;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
         border-radius: 12px;
         padding: 1.25rem;
         margin: 1rem 0;
         box-shadow: var(--card-shadow);
         position: relative;
         overflow: hidden;
+        color: var(--text-primary) !important;
     }
-    
+
     .performance-box::before {
         content: '';
         position: absolute;
@@ -184,6 +471,10 @@ st.markdown("""
         width: 4px;
         background: var(--accent-color);
         border-radius: 2px;
+    }
+
+    .performance-box div {
+        color: var(--text-primary) !important;
     }
     
     /* Modern Buttons */
@@ -247,15 +538,13 @@ st.markdown("""
     
     /* Subheader Styling */
     .subheader {
-        background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--text-primary) !important;
         font-size: 1.5rem;
         font-weight: 600;
         margin: 1.5rem 0 1rem 0;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid var(--border-color);
+        text-shadow: 1px 1px 2px rgba(99, 102, 241, 0.2);
     }
     
     /* Welcome Section */
@@ -358,6 +647,144 @@ class OptimizedSalesForecastAssistant:
         self.scaler = RobustScaler()
         self.data = None
         self.cache = {}
+        self.saved_forecasts = self.load_saved_forecasts()
+
+    def load_saved_forecasts(self) -> Dict:
+        """Load saved forecasts from session state or file"""
+        if 'saved_forecasts' not in st.session_state:
+            st.session_state.saved_forecasts = {}
+        return st.session_state.saved_forecasts
+
+    def save_forecast(self, name: str, forecast_data: Dict) -> bool:
+        """Save a forecast scenario"""
+        try:
+            forecast_data['timestamp'] = datetime.now().isoformat()
+            st.session_state.saved_forecasts[name] = forecast_data
+            return True
+        except Exception as e:
+            st.error(f"Error saving forecast: {str(e)}")
+            return False
+
+    def delete_forecast(self, name: str) -> bool:
+        """Delete a saved forecast"""
+        try:
+            if name in st.session_state.saved_forecasts:
+                del st.session_state.saved_forecasts[name]
+                return True
+            return False
+        except Exception as e:
+            st.error(f"Error deleting forecast: {str(e)}")
+            return False
+
+    def export_to_excel(self, forecast_df: pd.DataFrame, historical_df: pd.DataFrame,
+                       performance_metrics: Dict, summary: str) -> BytesIO:
+        """Export forecast data to Excel"""
+        try:
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                # Forecast data
+                forecast_df.to_excel(writer, sheet_name='Forecast', index=False)
+
+                # Historical data (last 30 days)
+                recent_historical = historical_df.tail(30)
+                recent_historical.to_excel(writer, sheet_name='Historical_Data', index=False)
+
+                # Performance metrics
+                metrics_df = pd.DataFrame([performance_metrics])
+                metrics_df.to_excel(writer, sheet_name='Performance_Metrics', index=False)
+
+                # Summary
+                summary_df = pd.DataFrame({'Summary': [summary]})
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+
+            output.seek(0)
+            return output
+        except Exception as e:
+            st.error(f"Error creating Excel export: {str(e)}")
+            return None
+
+    def export_to_pdf(self, forecast_df: pd.DataFrame, historical_df: pd.DataFrame,
+                     performance_metrics: Dict, summary: str, chart_image: bytes = None) -> BytesIO:
+        """Export forecast data to PDF"""
+        try:
+            output = BytesIO()
+            doc = SimpleDocTemplate(output, pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+
+            # Title
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                spaceAfter=30,
+                alignment=1  # Center alignment
+            )
+            story.append(Paragraph("Sales Forecast Report", title_style))
+            story.append(Spacer(1, 20))
+
+            # Summary
+            story.append(Paragraph("Executive Summary", styles['Heading2']))
+            story.append(Paragraph(summary.replace('**', '').replace('*', ''), styles['Normal']))
+            story.append(Spacer(1, 20))
+
+            # Performance Metrics
+            story.append(Paragraph("Model Performance Metrics", styles['Heading2']))
+            metrics_data = [['Metric', 'Value']]
+            for key, value in performance_metrics.items():
+                metrics_data.append([key, f"${value:.2f}"])
+
+            metrics_table = Table(metrics_data)
+            metrics_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 14),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(metrics_table)
+            story.append(Spacer(1, 20))
+
+            # Forecast Data Table
+            story.append(Paragraph("Forecast Details", styles['Heading2']))
+            forecast_data = [['Date', 'Predicted Sales', 'Day of Week']]
+            for _, row in forecast_df.head(10).iterrows():  # Show first 10 days
+                forecast_data.append([
+                    row['Date'].strftime('%Y-%m-%d'),
+                    f"${row['Forecast']:,.0f}",
+                    row['Date'].strftime('%A')
+                ])
+
+            forecast_table = Table(forecast_data)
+            forecast_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(forecast_table)
+
+            # Add chart if provided
+            if chart_image:
+                story.append(Spacer(1, 20))
+                story.append(Paragraph("Forecast Visualization", styles['Heading2']))
+                # Convert bytes to image and add to PDF
+                img = Image(BytesIO(chart_image), width=6*inch, height=4*inch)
+                story.append(img)
+
+            doc.build(story)
+            output.seek(0)
+            return output
+        except Exception as e:
+            st.error(f"Error creating PDF export: {str(e)}")
+            return None
         
     @st.cache_data
     def load_data_cached(_self, file_path: str) -> pd.DataFrame:
@@ -731,9 +1158,27 @@ def main():
     st.sidebar.markdown('<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">', unsafe_allow_html=True)
     st.sidebar.markdown('<h2 style="color: white; text-align: center; margin: 0;">⚙️ Control Panel</h2>', unsafe_allow_html=True)
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
+
+    # Theme Toggle
+    theme_color = "#ffffff" if st.session_state.theme == 'dark' else "#000000"
+    st.sidebar.markdown(f'<h3 style="color: {theme_color} !important; font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: bold;">🎨 Theme Settings</h3>', unsafe_allow_html=True)
+    theme_col1, theme_col2 = st.sidebar.columns([1, 1])
+    with theme_col1:
+        if st.button("☀️ Light", key="light_theme", use_container_width=True):
+            st.session_state.theme = 'light'
+            st.rerun()
+    with theme_col2:
+        if st.button("🌙 Dark", key="dark_theme", use_container_width=True):
+            st.session_state.theme = 'dark'
+            st.rerun()
+
+    # Current theme indicator
+    current_theme_icon = "☀️" if st.session_state.theme == 'light' else "🌙"
+    indicator_color = "#ffffff" if st.session_state.theme == 'dark' else "#000000"
+    st.sidebar.markdown(f'<p style="text-align: center; color: {indicator_color} !important; font-size: 0.9rem; font-weight: 500;">Current: {current_theme_icon} {st.session_state.theme.title()} Mode</p>', unsafe_allow_html=True)
     
     # File upload with modern styling
-    st.sidebar.markdown('<h3 style="color: #1e293b; font-size: 1.1rem; margin-bottom: 0.5rem;">📁 Data Upload</h3>', unsafe_allow_html=True)
+    st.sidebar.markdown(f'<h3 style="color: {theme_color} !important; font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: bold;">📁 Data Upload</h3>', unsafe_allow_html=True)
     uploaded_file = st.sidebar.file_uploader(
         "Choose your sales data file",
         type=['csv'],
@@ -745,7 +1190,7 @@ def main():
         st.sidebar.success(f"✅ {uploaded_file.name} uploaded successfully!")
     
     # Forecast settings with modern design
-    st.sidebar.markdown('<h3 style="color: #1e293b; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0;">📈 Forecast Configuration</h3>', unsafe_allow_html=True)
+    st.sidebar.markdown(f'<h3 style="color: {theme_color} !important; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0; font-weight: bold;">📈 Forecast Configuration</h3>', unsafe_allow_html=True)
     
     forecast_days = st.sidebar.slider(
         "Forecast Period (Days)", 
@@ -762,7 +1207,7 @@ def main():
     )
     
     # Model settings with enhanced UX
-    st.sidebar.markdown('<h3 style="color: #1e293b; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0;">🤖 Model Options</h3>', unsafe_allow_html=True)
+    st.sidebar.markdown(f'<h3 style="color: {theme_color} !important; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0; font-weight: bold;">🤖 Model Options</h3>', unsafe_allow_html=True)
     
     show_performance = st.sidebar.checkbox(
         "Show Performance Metrics", 
@@ -770,12 +1215,39 @@ def main():
         help="Display model accuracy metrics"
     )
     
+    # Saved Forecasts Management
+    st.sidebar.markdown(f'<h3 style="color: {theme_color} !important; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0; font-weight: bold;">📚 Saved Forecasts</h3>', unsafe_allow_html=True)
+
+    saved_forecasts = st.session_state.forecast_assistant.saved_forecasts
+    if saved_forecasts:
+        selected_forecast = st.sidebar.selectbox(
+            "Load Saved Forecast",
+            options=[""] + list(saved_forecasts.keys()),
+            help="Select a previously saved forecast to load"
+        )
+
+        if selected_forecast:
+            col1, col2 = st.sidebar.columns([1, 1])
+            with col1:
+                if st.button("📂 Load", key="load_forecast", use_container_width=True):
+                    st.session_state.loaded_forecast = saved_forecasts[selected_forecast]
+                    st.success(f"Loaded forecast: {selected_forecast}")
+            with col2:
+                if st.button("🗑️ Delete", key="delete_forecast", use_container_width=True):
+                    if st.session_state.forecast_assistant.delete_forecast(selected_forecast):
+                        st.success(f"Deleted forecast: {selected_forecast}")
+                        st.rerun()
+    else:
+        st.sidebar.info("No saved forecasts yet")
+
     # Add a quick stats section
     if uploaded_file:
         st.sidebar.markdown('<div style="background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem;">', unsafe_allow_html=True)
-        st.sidebar.markdown('<h4 style="color: #1e293b; margin: 0 0 0.5rem 0;">📊 Quick Stats</h4>', unsafe_allow_html=True)
-        st.sidebar.markdown(f'<p style="color: #64748b; margin: 0; font-size: 0.9rem;">Forecast Period: <strong>{forecast_days} days</strong></p>', unsafe_allow_html=True)
-        st.sidebar.markdown(f'<p style="color: #64748b; margin: 0; font-size: 0.9rem;">Threshold: <strong>${inventory_threshold:,.0f}</strong></p>', unsafe_allow_html=True)
+        secondary_color = "#ffffff" if st.session_state.theme == 'dark' else "#000000"
+        st.sidebar.markdown(f'<h4 style="color: {theme_color} !important; margin: 0 0 0.5rem 0; font-weight: bold;">📊 Quick Stats</h4>', unsafe_allow_html=True)
+        st.sidebar.markdown(f'<p style="color: {secondary_color} !important; margin: 0; font-size: 0.9rem; font-weight: 500;">Forecast Period: <strong>{forecast_days} days</strong></p>', unsafe_allow_html=True)
+        st.sidebar.markdown(f'<p style="color: {secondary_color} !important; margin: 0; font-size: 0.9rem; font-weight: 500;">Threshold: <strong>${inventory_threshold:,.0f}</strong></p>', unsafe_allow_html=True)
+        st.sidebar.markdown(f'<p style="color: {secondary_color} !important; margin: 0; font-size: 0.9rem; font-weight: 500;">Saved Forecasts: <strong>{len(saved_forecasts)}</strong></p>', unsafe_allow_html=True)
         st.sidebar.markdown('</div>', unsafe_allow_html=True)
     
     # Main content
@@ -831,6 +1303,10 @@ def main():
             
             # Modern Forecast Button with Enhanced UX
             st.markdown('<div style="text-align: center; margin: 2rem 0;">', unsafe_allow_html=True)
+
+            # Add info about export options
+            st.info("💡 **Tip**: After generating the forecast, you'll see Export & Save options to download Excel/PDF reports and save forecast scenarios!")
+
             if st.button("🚀 Generate AI Forecast", type="primary", use_container_width=True):
                 st.markdown('</div>', unsafe_allow_html=True)
                 
@@ -1023,6 +1499,127 @@ def main():
                                             <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-top: 0.5rem;">${performance_metrics['MSE']:.0f}</div>
                                         </div>
                                         ''', unsafe_allow_html=True)
+
+                                # Export and Save Options - MOVED HERE FOR BETTER VISIBILITY
+                                st.markdown('<h2 class="subheader">💾 Export & Save Options</h2>', unsafe_allow_html=True)
+
+                                col1, col2, col3, col4 = st.columns(4)
+
+                                # Save Forecast
+                                with col1:
+                                    forecast_name = st.text_input("Forecast Name", placeholder="Enter name to save", key="forecast_name")
+                                    if st.button("💾 Save Forecast", use_container_width=True):
+                                        if forecast_name:
+                                            forecast_data = {
+                                                'forecast': forecast.tolist(),
+                                                'dates': [d.isoformat() for d in forecast_dates],
+                                                'performance_metrics': performance_metrics,
+                                                'summary': summary,
+                                                'forecast_days': forecast_days,
+                                                'inventory_threshold': inventory_threshold
+                                            }
+                                            if st.session_state.forecast_assistant.save_forecast(forecast_name, forecast_data):
+                                                st.success(f"Forecast saved as '{forecast_name}'")
+                                        else:
+                                            st.warning("Please enter a name for the forecast")
+
+                                # Export to Excel
+                                with col2:
+                                    if st.button("📊 Export Excel", use_container_width=True):
+                                        try:
+                                            excel_data = st.session_state.forecast_assistant.export_to_excel(
+                                                forecast_df, historical_df, performance_metrics, summary
+                                            )
+                                            if excel_data:
+                                                st.download_button(
+                                                    label="⬇️ Download Excel",
+                                                    data=excel_data,
+                                                    file_name=f"sales_forecast_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                                    use_container_width=True
+                                                )
+                                        except Exception as e:
+                                            st.error(f"Excel export error: {str(e)}")
+
+                                # Export to PDF
+                                with col3:
+                                    if st.button("📄 Export PDF", use_container_width=True):
+                                        try:
+                                            # Convert chart to image for PDF
+                                            chart_image = pio.to_image(fig, format='png', width=800, height=600)
+                                            pdf_data = st.session_state.forecast_assistant.export_to_pdf(
+                                                forecast_df, historical_df, performance_metrics, summary, chart_image
+                                            )
+                                            if pdf_data:
+                                                st.download_button(
+                                                    label="⬇️ Download PDF",
+                                                    data=pdf_data,
+                                                    file_name=f"sales_forecast_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                                                    mime="application/pdf",
+                                                    use_container_width=True
+                                                )
+                                        except Exception as e:
+                                            st.error(f"PDF export error: {str(e)}")
+
+                                # Compare with Saved Forecasts
+                                with col4:
+                                    if saved_forecasts:
+                                        compare_forecast = st.selectbox(
+                                            "Compare with:",
+                                            options=[""] + list(saved_forecasts.keys()),
+                                            key="compare_forecast"
+                                        )
+                                        if compare_forecast and st.button("📈 Compare", use_container_width=True):
+                                            st.session_state.show_comparison = True
+                                            st.session_state.comparison_forecast = compare_forecast
+
+                                # Show comparison if requested
+                                if st.session_state.get('show_comparison', False) and st.session_state.get('comparison_forecast'):
+                                    st.markdown('<h2 class="subheader">📊 Forecast Comparison</h2>', unsafe_allow_html=True)
+
+                                    comparison_data = saved_forecasts[st.session_state.comparison_forecast]
+                                    comparison_forecast_data = np.array(comparison_data['forecast'])
+                                    comparison_dates = [datetime.fromisoformat(d) for d in comparison_data['dates']]
+
+                                    # Create comparison chart
+                                    comparison_fig = go.Figure()
+
+                                    # Current forecast
+                                    comparison_fig.add_trace(go.Scatter(
+                                        x=forecast_dates,
+                                        y=forecast,
+                                        mode='lines+markers',
+                                        name='Current Forecast',
+                                        line=dict(color='red', width=3)
+                                    ))
+
+                                    # Saved forecast
+                                    comparison_fig.add_trace(go.Scatter(
+                                        x=comparison_dates,
+                                        y=comparison_forecast_data,
+                                        mode='lines+markers',
+                                        name=f'Saved: {st.session_state.comparison_forecast}',
+                                        line=dict(color='blue', width=3)
+                                    ))
+
+                                    comparison_fig.update_layout(
+                                        title="Forecast Comparison",
+                                        xaxis_title="Date",
+                                        yaxis_title="Sales ($)",
+                                        height=400
+                                    )
+
+                                    st.plotly_chart(comparison_fig, use_container_width=True)
+
+                                    # Comparison metrics
+                                    comp_col1, comp_col2, comp_col3 = st.columns(3)
+                                    with comp_col1:
+                                        st.metric("Current Avg", f"${np.mean(forecast):,.0f}")
+                                    with comp_col2:
+                                        st.metric("Saved Avg", f"${np.mean(comparison_forecast_data):,.0f}")
+                                    with comp_col3:
+                                        diff = np.mean(forecast) - np.mean(comparison_forecast_data)
+                                        st.metric("Difference", f"${diff:,.0f}", delta=f"{diff:,.0f}")
                                 
                                 # Enhanced alerts section
                                 alerts = st.session_state.forecast_assistant.check_inventory_alerts(forecast, inventory_threshold)
@@ -1057,6 +1654,8 @@ def main():
                                 </div>
                                 ''', unsafe_allow_html=True)
                                 
+
+
                                 # Enhanced forecast details table
                                 st.markdown('<h2 class="subheader">📊 Detailed Forecast</h2>', unsafe_allow_html=True)
                                 forecast_details = pd.DataFrame({
