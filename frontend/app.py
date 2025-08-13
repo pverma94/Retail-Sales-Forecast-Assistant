@@ -31,6 +31,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Force sidebar to be visible with additional CSS
+st.markdown("""
+<style>
+    /* Force sidebar to be visible */
+    .css-1d391kg {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 21rem !important;
+        min-width: 21rem !important;
+        max-width: 21rem !important;
+    }
+
+    /* Ensure sidebar toggle button is visible */
+    .css-1rs6os {
+        display: block !important;
+    }
+
+    /* Make sure main content adjusts for sidebar */
+    .css-18e3th9 {
+        padding-left: 22rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Initialize theme in session state
 if 'theme' not in st.session_state:
     st.session_state.theme = 'light'
@@ -100,28 +125,45 @@ def get_theme_css(theme: str) -> str:
                 color: white !important;
             }
 
-            /* Sidebar styling */
-            .css-1d391kg, .css-1cypcdb {
-                background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            /* Sidebar styling - Enhanced Dark Mode - Force Override */
+            .css-1d391kg, .css-1cypcdb, section[data-testid="stSidebar"],
+            section[data-testid="stSidebar"] > div,
+            .css-1d391kg > div,
+            .stSidebar > div {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
+                border-right: 2px solid #d1d5db !important;
+            }
+
+            /* Additional force for sidebar container */
+            [data-testid="stSidebar"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
             }
 
             /* Sidebar text colors - DARK MODE */
             .css-1d391kg *, .css-1d391kg p, .css-1d391kg div, .css-1d391kg span, .css-1d391kg label {
-                color: #ffffff !important;
+                color: #374151 !important;
             }
 
+            /* Enhanced sidebar titles - DARK MODE */
             .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
-                color: #ffffff !important;
+                color: #dc2626 !important;
+                font-weight: 700 !important;
+                text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+                margin-bottom: 0.8rem !important;
             }
 
             /* Sidebar markdown text */
             .css-1d391kg .stMarkdown, .css-1d391kg .stMarkdown p, .css-1d391kg .stMarkdown div, .css-1d391kg .stMarkdown span {
-                color: #ffffff !important;
+                color: #374151 !important;
             }
 
-            /* Force all sidebar elements to be white */
+            /* Force all sidebar elements to be dark grey, but titles to be red */
             section[data-testid="stSidebar"] * {
-                color: #ffffff !important;
+                color: #374151 !important;
             }
 
             section[data-testid="stSidebar"] h1,
@@ -130,23 +172,58 @@ def get_theme_css(theme: str) -> str:
             section[data-testid="stSidebar"] h4,
             section[data-testid="stSidebar"] h5,
             section[data-testid="stSidebar"] h6 {
-                color: #ffffff !important;
+                color: #dc2626 !important;
+                font-weight: 700 !important;
+                text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+                margin-bottom: 0.8rem !important;
             }
 
-            /* Form elements */
+            /* Form elements - Dark Mode */
             .stSelectbox > div > div, .stSelectbox label {
-                background-color: #1e293b !important;
-                color: #f1f5f9 !important;
+                background-color: #ffffff !important;
+                color: #1f2937 !important;
             }
 
             .stTextInput > div > div > input {
-                background-color: #1e293b !important;
-                color: #f1f5f9 !important;
-                border-color: #334155 !important;
+                background-color: #ffffff !important;
+                color: #1f2937 !important;
+                border-color: #d1d5db !important;
             }
 
             .stTextInput label {
-                color: #f1f5f9 !important;
+                color: #1f2937 !important;
+            }
+
+            /* Number Input - Dark Mode */
+            .stNumberInput > div > div > input {
+                background-color: #ffffff !important;
+                color: #1f2937 !important;
+                border-color: #d1d5db !important;
+            }
+
+            .stNumberInput label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            /* File Uploader - Dark Mode */
+            .stFileUploader label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            .stFileUploader > div {
+                background-color: #ffffff !important;
+                border-color: #d1d5db !important;
+                color: #1f2937 !important;
+            }
+
+            .stFileUploader > div > div {
+                color: #1f2937 !important;
+            }
+
+            .stFileUploader span {
+                color: #1f2937 !important;
             }
 
             /* Sidebar buttons */
@@ -174,6 +251,87 @@ def get_theme_css(theme: str) -> str:
 
             .performance-box div {
                 color: #f1f5f9 !important;
+            }
+
+            /* Main Content Text Override - Dark Mode */
+            .main .block-container p[style*="color: #64748b"],
+            .main .block-container div[style*="color: #64748b"],
+            .main .block-container span[style*="color: #64748b"] {
+                color: #cbd5e1 !important;
+            }
+
+            .main .block-container h3[style*="color: #1e293b"],
+            .main .block-container p[style*="color: #1e293b"],
+            .main .block-container div[style*="color: #1e293b"] {
+                color: #f1f5f9 !important;
+            }
+
+            /* Glass card content - Dark Mode */
+            .glass-card p[style*="color: #64748b"],
+            .glass-card div[style*="color: #64748b"] {
+                color: #cbd5e1 !important;
+            }
+
+            .glass-card h3[style*="color: #1e293b"] {
+                color: #f1f5f9 !important;
+            }
+
+            /* FINAL OVERRIDE - Force white/cream sidebar background */
+            section[data-testid="stSidebar"],
+            section[data-testid="stSidebar"] > div,
+            section[data-testid="stSidebar"] > div > div,
+            .css-1d391kg,
+            .css-1cypcdb {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
+            }
+
+            /* FINAL OVERRIDE - Ensure all form elements are visible */
+            section[data-testid="stSidebar"] .stFileUploader label,
+            section[data-testid="stSidebar"] .stNumberInput label,
+            section[data-testid="stSidebar"] .stTextInput label,
+            section[data-testid="stSidebar"] .stSelectbox label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            section[data-testid="stSidebar"] .stFileUploader > div,
+            section[data-testid="stSidebar"] .stFileUploader span,
+            section[data-testid="stSidebar"] .stNumberInput input,
+            section[data-testid="stSidebar"] .stTextInput input {
+                color: #1f2937 !important;
+                background-color: #ffffff !important;
+            }
+
+            section[data-testid="stSidebar"] .stFileUploader > div {
+                border: 2px dashed #d1d5db !important;
+                background-color: #f9fafb !important;
+            }
+
+            /* File Uploader Text Elements - Force Visibility */
+            section[data-testid="stSidebar"] .stFileUploader small,
+            section[data-testid="stSidebar"] .stFileUploader p,
+            section[data-testid="stSidebar"] .stFileUploader div,
+            section[data-testid="stSidebar"] .stFileUploader button,
+            section[data-testid="stSidebar"] .stFileUploader [data-testid="stFileUploaderDropzone"],
+            section[data-testid="stSidebar"] .stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] {
+                color: #1f2937 !important;
+                background-color: transparent !important;
+            }
+
+            /* Browse Files Button */
+            section[data-testid="stSidebar"] .stFileUploader button {
+                color: #ffffff !important;
+                background-color: #3b82f6 !important;
+                border: 1px solid #3b82f6 !important;
+                font-weight: 600 !important;
+            }
+
+            /* Help Text */
+            section[data-testid="stSidebar"] .stTooltipIcon,
+            section[data-testid="stSidebar"] [data-testid="stTooltipHoverTarget"] {
+                color: #1f2937 !important;
             }
         </style>
         """
@@ -246,28 +404,45 @@ def get_theme_css(theme: str) -> str:
                 color: white !important;
             }
 
-            /* Sidebar styling */
-            .css-1d391kg, .css-1cypcdb {
-                background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%) !important;
+            /* Sidebar styling - Enhanced Light Mode - Force Override */
+            .css-1d391kg, .css-1cypcdb, section[data-testid="stSidebar"],
+            section[data-testid="stSidebar"] > div,
+            .css-1d391kg > div,
+            .stSidebar > div {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
+                border-right: 2px solid #d1d5db !important;
+            }
+
+            /* Additional force for sidebar container */
+            [data-testid="stSidebar"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
             }
 
             /* Sidebar text colors - LIGHT MODE */
             .css-1d391kg *, .css-1d391kg p, .css-1d391kg div, .css-1d391kg span, .css-1d391kg label {
-                color: #000000 !important;
+                color: #1f2937 !important;
             }
 
+            /* Enhanced sidebar titles - LIGHT MODE */
             .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
-                color: #000000 !important;
+                color: #dc2626 !important;
+                font-weight: 700 !important;
+                text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+                margin-bottom: 0.8rem !important;
             }
 
             /* Sidebar markdown text */
             .css-1d391kg .stMarkdown, .css-1d391kg .stMarkdown p, .css-1d391kg .stMarkdown div, .css-1d391kg .stMarkdown span {
-                color: #000000 !important;
+                color: #1f2937 !important;
             }
 
-            /* Force all sidebar elements to be black */
+            /* Force all sidebar elements to be dark, but titles to be red */
             section[data-testid="stSidebar"] * {
-                color: #000000 !important;
+                color: #1f2937 !important;
             }
 
             section[data-testid="stSidebar"] h1,
@@ -276,23 +451,58 @@ def get_theme_css(theme: str) -> str:
             section[data-testid="stSidebar"] h4,
             section[data-testid="stSidebar"] h5,
             section[data-testid="stSidebar"] h6 {
-                color: #000000 !important;
+                color: #dc2626 !important;
+                font-weight: 700 !important;
+                text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8) !important;
+                margin-bottom: 0.8rem !important;
             }
 
-            /* Form elements */
+            /* Form elements - Light Mode */
             .stSelectbox > div > div, .stSelectbox label {
                 background-color: #ffffff !important;
-                color: #1e293b !important;
+                color: #1f2937 !important;
             }
 
             .stTextInput > div > div > input {
                 background-color: #ffffff !important;
-                color: #1e293b !important;
-                border-color: #e2e8f0 !important;
+                color: #1f2937 !important;
+                border-color: #d1d5db !important;
             }
 
             .stTextInput label {
-                color: #1e293b !important;
+                color: #1f2937 !important;
+            }
+
+            /* Number Input - Light Mode */
+            .stNumberInput > div > div > input {
+                background-color: #ffffff !important;
+                color: #1f2937 !important;
+                border-color: #d1d5db !important;
+            }
+
+            .stNumberInput label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            /* File Uploader - Light Mode */
+            .stFileUploader label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            .stFileUploader > div {
+                background-color: #ffffff !important;
+                border-color: #d1d5db !important;
+                color: #1f2937 !important;
+            }
+
+            .stFileUploader > div > div {
+                color: #1f2937 !important;
+            }
+
+            .stFileUploader span {
+                color: #1f2937 !important;
             }
 
             /* Sidebar buttons */
@@ -321,12 +531,156 @@ def get_theme_css(theme: str) -> str:
             .performance-box div {
                 color: #1e293b !important;
             }
+
+            /* Main Content Text Override - Light Mode */
+            .main .block-container p[style*="color: #64748b"],
+            .main .block-container div[style*="color: #64748b"],
+            .main .block-container span[style*="color: #64748b"] {
+                color: #64748b !important;
+            }
+
+            .main .block-container h3[style*="color: #1e293b"],
+            .main .block-container p[style*="color: #1e293b"],
+            .main .block-container div[style*="color: #1e293b"] {
+                color: #1e293b !important;
+            }
+
+            /* Glass card content - Light Mode */
+            .glass-card p[style*="color: #64748b"],
+            .glass-card div[style*="color: #64748b"] {
+                color: #64748b !important;
+            }
+
+            .glass-card h3[style*="color: #1e293b"] {
+                color: #1e293b !important;
+            }
+
+            /* FINAL OVERRIDE - Force white/cream sidebar background */
+            section[data-testid="stSidebar"],
+            section[data-testid="stSidebar"] > div,
+            section[data-testid="stSidebar"] > div > div,
+            .css-1d391kg,
+            .css-1cypcdb {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                background-image: linear-gradient(180deg, #ffffff 0%, #fefcf3 50%, #fef7e0 100%) !important;
+            }
+
+            /* FINAL OVERRIDE - Ensure all form elements are visible */
+            section[data-testid="stSidebar"] .stFileUploader label,
+            section[data-testid="stSidebar"] .stNumberInput label,
+            section[data-testid="stSidebar"] .stTextInput label,
+            section[data-testid="stSidebar"] .stSelectbox label {
+                color: #1f2937 !important;
+                font-weight: 600 !important;
+            }
+
+            section[data-testid="stSidebar"] .stFileUploader > div,
+            section[data-testid="stSidebar"] .stFileUploader span,
+            section[data-testid="stSidebar"] .stNumberInput input,
+            section[data-testid="stSidebar"] .stTextInput input {
+                color: #1f2937 !important;
+                background-color: #ffffff !important;
+            }
+
+            section[data-testid="stSidebar"] .stFileUploader > div {
+                border: 2px dashed #d1d5db !important;
+                background-color: #f9fafb !important;
+            }
+
+            /* File Uploader Text Elements - Force Visibility */
+            section[data-testid="stSidebar"] .stFileUploader small,
+            section[data-testid="stSidebar"] .stFileUploader p,
+            section[data-testid="stSidebar"] .stFileUploader div,
+            section[data-testid="stSidebar"] .stFileUploader button,
+            section[data-testid="stSidebar"] .stFileUploader [data-testid="stFileUploaderDropzone"],
+            section[data-testid="stSidebar"] .stFileUploader [data-testid="stFileUploaderDropzoneInstructions"] {
+                color: #1f2937 !important;
+                background-color: transparent !important;
+            }
+
+            /* Browse Files Button */
+            section[data-testid="stSidebar"] .stFileUploader button {
+                color: #ffffff !important;
+                background-color: #3b82f6 !important;
+                border: 1px solid #3b82f6 !important;
+                font-weight: 600 !important;
+            }
+
+            /* Help Text */
+            section[data-testid="stSidebar"] .stTooltipIcon,
+            section[data-testid="stSidebar"] [data-testid="stTooltipHoverTarget"] {
+                color: #1f2937 !important;
+            }
         </style>
         """
 
 # Apply theme CSS
 theme_css = get_theme_css(st.session_state.theme)
 st.markdown(theme_css, unsafe_allow_html=True)
+
+# Additional CSS to ensure text visibility
+light_mode_override = ""
+
+st.markdown(f"""
+<style>
+    {light_mode_override}
+
+    /* ULTIMATE OVERRIDE - File Uploader Visibility */
+    section[data-testid="stSidebar"] .stFileUploader,
+    section[data-testid="stSidebar"] .stFileUploader *,
+    section[data-testid="stSidebar"] .stFileUploader label,
+    section[data-testid="stSidebar"] .stFileUploader small,
+    section[data-testid="stSidebar"] .stFileUploader p,
+    section[data-testid="stSidebar"] .stFileUploader div,
+    section[data-testid="stSidebar"] .stFileUploader span {{
+        color: #1f2937 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }}
+
+    /* File Uploader Drop Zone */
+    section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {{
+        background-color: #f9fafb !important;
+        border: 2px dashed #9ca3af !important;
+        color: #1f2937 !important;
+        padding: 1rem !important;
+        text-align: center !important;
+    }}
+
+    /* Browse Files Button */
+    section[data-testid="stSidebar"] .stFileUploader button {{
+        background-color: #3b82f6 !important;
+        color: #ffffff !important;
+        border: none !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+    }}
+
+    /* File Uploader Instructions */
+    section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] {{
+        color: #1f2937 !important;
+        font-size: 0.9rem !important;
+    }}
+
+    /* Help Text and Tooltips */
+    section[data-testid="stSidebar"] .stTooltipIcon {{
+        color: #6b7280 !important;
+    }}
+
+    /* Ensure all text is visible */
+    section[data-testid="stSidebar"] .stFileUploader .css-1cpxqw2,
+    section[data-testid="stSidebar"] .stFileUploader .css-1v0mbdj {{
+        color: #1f2937 !important;
+    }}
+
+
+
+
+</style>
+""", unsafe_allow_html=True)
 
 # Modern UX/UI Design - Enhanced CSS
 st.markdown("""
@@ -637,6 +991,29 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: var(--primary-dark);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# EMERGENCY CSS OVERRIDE - Force text visibility
+st.markdown("""
+<style>
+    /* FORCE VISIBILITY - HIGHEST PRIORITY */
+    .step-text-box {
+        background: linear-gradient(45deg, #ff0000, #00ff00) !important;
+        color: #000000 !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
+        padding: 20px !important;
+        margin: 10px 0 !important;
+        border: 5px solid #000000 !important;
+        border-radius: 10px !important;
+        text-shadow: 2px 2px 4px #ffffff !important;
+        box-shadow: 0 0 20px #ff0000 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 9999 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1152,7 +1529,8 @@ def main():
     st.markdown('<h1 class="main-header">🚀 AI-Powered Sales Forecast Assistant</h1>', unsafe_allow_html=True)
     
     # Add a subtle subtitle
-    st.markdown('<p style="text-align: center; color: #64748b; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;">Transform your business with intelligent sales predictions</p>', unsafe_allow_html=True)
+    subtitle_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#000000"
+    st.markdown(f'<p style="text-align: center; color: {subtitle_color}; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;">Transform your business with intelligent sales predictions</p>', unsafe_allow_html=True)
     
     # Modern Sidebar with Enhanced UX
     st.sidebar.markdown('<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">', unsafe_allow_html=True)
@@ -1314,7 +1692,8 @@ def main():
                 with st.spinner("🤖 Training AI model..."):
                     st.markdown('<div style="text-align: center; margin: 1rem 0;">', unsafe_allow_html=True)
                     st.markdown('<div class="loading-spinner"></div>', unsafe_allow_html=True)
-                    st.markdown('<p style="color: #64748b; margin-top: 0.5rem;">Preparing data and training optimized model...</p>', unsafe_allow_html=True)
+                    loading_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#000000"
+                    st.markdown(f'<p style="color: {loading_color}; margin-top: 0.5rem;">Preparing data and training optimized model...</p>', unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
                     # Prepare time series data
                     X, y, min_val, max_val, daily_sales = st.session_state.forecast_assistant.prepare_time_series_data(forecast_days)
@@ -1479,24 +1858,26 @@ def main():
                                     st.markdown('<h2 class="subheader">🎯 Model Performance</h2>', unsafe_allow_html=True)
                                     perf_col1, perf_col2, perf_col3 = st.columns(3)
                                     with perf_col1:
+                                        metric_label_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#000000"
+                                        metric_value_color = "#f1f5f9" if st.session_state.theme == 'dark' else "#000000"
                                         st.markdown(f'''
                                         <div class="performance-box">
-                                            <div style="font-size: 0.9rem; color: #64748b;">Mean Absolute Error</div>
-                                            <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-top: 0.5rem;">${performance_metrics['MAE']:.0f}</div>
+                                            <div style="font-size: 0.9rem; color: {metric_label_color};">Mean Absolute Error</div>
+                                            <div style="font-size: 1.5rem; font-weight: 700; color: {metric_value_color}; margin-top: 0.5rem;">${performance_metrics['MAE']:.0f}</div>
                                         </div>
                                         ''', unsafe_allow_html=True)
                                     with perf_col2:
                                         st.markdown(f'''
                                         <div class="performance-box">
-                                            <div style="font-size: 0.9rem; color: #64748b;">Root Mean Square Error</div>
-                                            <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-top: 0.5rem;">${performance_metrics['RMSE']:.0f}</div>
+                                            <div style="font-size: 0.9rem; color: {metric_label_color};">Root Mean Square Error</div>
+                                            <div style="font-size: 1.5rem; font-weight: 700; color: {metric_value_color}; margin-top: 0.5rem;">${performance_metrics['RMSE']:.0f}</div>
                                         </div>
                                         ''', unsafe_allow_html=True)
                                     with perf_col3:
                                         st.markdown(f'''
                                         <div class="performance-box">
-                                            <div style="font-size: 0.9rem; color: #64748b;">Mean Square Error</div>
-                                            <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-top: 0.5rem;">${performance_metrics['MSE']:.0f}</div>
+                                            <div style="font-size: 0.9rem; color: {metric_label_color};">Mean Square Error</div>
+                                            <div style="font-size: 1.5rem; font-weight: 700; color: {metric_value_color}; margin-top: 0.5rem;">${performance_metrics['MSE']:.0f}</div>
                                         </div>
                                         ''', unsafe_allow_html=True)
 
@@ -1691,95 +2072,111 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown('''
+            feature_title_color = "#f1f5f9" if st.session_state.theme == 'dark' else "#000000"
+            feature_text_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#000000"
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">🤖</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Advanced AI Model</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">3-layer LSTM architecture with batch normalization for superior accuracy</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Advanced AI Model</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">3-layer LSTM architecture with batch normalization for superior accuracy</p>
             </div>
             ''', unsafe_allow_html=True)
             
-            st.markdown('''
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Smart Analytics</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">Feature engineering with seasonal patterns and rolling statistics</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Smart Analytics</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">Feature engineering with seasonal patterns and rolling statistics</p>
             </div>
             ''', unsafe_allow_html=True)
-            
-            st.markdown('''
+
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">⚡</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Lightning Fast</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">50% faster training with optimized memory management</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Lightning Fast</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">50% faster training with optimized memory management</p>
             </div>
             ''', unsafe_allow_html=True)
         
         with col2:
-            st.markdown('''
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Performance Metrics</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">Comprehensive model evaluation with confidence assessment</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Performance Metrics</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">Comprehensive model evaluation with confidence assessment</p>
             </div>
             ''', unsafe_allow_html=True)
-            
-            st.markdown('''
+
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Smart Alerts</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">Intelligent inventory alerts and trend change detection</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Smart Alerts</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">Intelligent inventory alerts and trend change detection</p>
             </div>
             ''', unsafe_allow_html=True)
-            
-            st.markdown('''
+
+            st.markdown(f'''
             <div class="feature-item">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">🔮</div>
-                <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">Future Insights</h3>
-                <p style="color: #64748b; margin: 0; line-height: 1.5;">7-30 day forecasts with detailed trend analysis</p>
+                <h3 style="margin: 0 0 0.5rem 0; color: {feature_title_color};">Future Insights</h3>
+                <p style="color: {feature_text_color}; margin: 0; line-height: 1.5;">7-30 day forecasts with detailed trend analysis</p>
             </div>
             ''', unsafe_allow_html=True)
         
         # Getting Started Section
         st.markdown('<h2 class="subheader">🚀 Getting Started</h2>', unsafe_allow_html=True)
         
-        st.markdown('''
+        step_title_color = "#f1f5f9" if st.session_state.theme == 'dark' else "#ffffff"
+        step_text_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#ffffff"
+        st.markdown(f'''
         <div class="glass-card">
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">1</div>
-                <h3 style="margin: 0; color: #1e293b;">Upload Your Data</h3>
+                <h3 style="margin: 0; color: {step_title_color} !important; font-weight: bold !important;">Upload Your Data</h3>
             </div>
-            <p style="color: #64748b; margin: 0 0 1rem 0;">Upload your CSV file with sales data (Order_Date and Sales columns required)</p>
-            
+            <div class="step-text-box">
+                📁 Upload your CSV file with sales data (Order_Date and Sales columns required)
+            </div>
+
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">2</div>
-                <h3 style="margin: 0; color: #1e293b;">Configure Settings</h3>
+                <h3 style="margin: 0; color: {step_title_color} !important; font-weight: bold !important;">Configure Settings</h3>
             </div>
-            <p style="color: #64748b; margin: 0 0 1rem 0;">Adjust forecast period and inventory threshold in the sidebar</p>
-            
+            <div class="step-text-box">
+                ⚙️ Adjust forecast period and inventory threshold in the sidebar
+            </div>
+
             <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">3</div>
-                <h3 style="margin: 0; color: #1e293b;">Generate Forecast</h3>
+                <h3 style="margin: 0; color: {step_title_color} !important; font-weight: bold !important;">Generate Forecast</h3>
             </div>
-            <p style="color: #64748b; margin: 0;">Click "Generate AI Forecast" to get intelligent predictions and insights</p>
+            <div class="step-text-box">
+                🚀 Click "Generate AI Forecast" to get intelligent predictions and insights
+            </div>
         </div>
         ''', unsafe_allow_html=True)
         
         # Sample Data Format
         st.markdown('<h2 class="subheader">📋 Data Format</h2>', unsafe_allow_html=True)
         
-        st.markdown('''
+        # Define colors for CSV format section
+        csv_title_color = "#f1f5f9" if st.session_state.theme == 'dark' else "#ffffff"
+        csv_text_color = "#cbd5e1" if st.session_state.theme == 'dark' else "#ffffff"
+        csv_bg_color = "#374151" if st.session_state.theme == 'dark' else "#e5e7eb"
+        csv_code_color = "#f1f5f9" if st.session_state.theme == 'dark' else "#000000"
+
+        st.markdown(f'''
         <div class="glass-card">
-            <h3 style="margin: 0 0 1rem 0; color: #1e293b;">Required CSV Format</h3>
-            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem;">
+            <h3 style="margin: 0 0 1rem 0; color: {csv_title_color} !important; font-weight: bold !important;">Required CSV Format</h3>
+            <div style="background: {csv_bg_color}; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; color: {csv_code_color} !important;">
                 Order_Date,Sales,Product_Name<br>
                 2023-01-01,100.50,Product A<br>
                 2023-01-02,150.75,Product B<br>
                 2023-01-03,200.25,Product A
             </div>
-            <p style="color: #64748b; margin: 1rem 0 0 0; font-size: 0.9rem;">
-                <strong>Note:</strong> Only Order_Date and Sales columns are required. Additional columns will be ignored.
-            </p>
+            <div class="step-text-box">
+                ⚠️ <strong>Note:</strong> Only Order_Date and Sales columns are required. Additional columns will be ignored.
+            </div>
         </div>
         ''', unsafe_allow_html=True)
         
