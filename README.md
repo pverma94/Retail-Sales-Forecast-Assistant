@@ -1,4 +1,4 @@
-# 📊 Retail Sales Forecast Assistant
+# 📊 Optimized Retail Sales Forecast Assistant
 
 An **AI-powered business application** that predicts short-term sales trends for inventory and planning teams. This optimized version features enhanced performance, accuracy, and user experience.
 
